@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fake News📰 Detection System</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    .slide-up {
+      animation: slideUp 0.5s ease-in-out;
+    }
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #4f46e5;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md fade-in">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Fake News📰 Detector</h1>
+
+    <form action="{{ url_for('predict') }}" method="POST" class="space-y-4">
+      <textarea name="message" rows="6" required placeholder="Type your news article here..."
+        class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      
+      <!-- Loading Spinner -->
+      <div id="loading" class="hidden text-center">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <p class="text-gray-500">Processing...</p>
+      </div>
+
+      <!-- Predict Button -->
+      <button id="predictBtn" type="submit" 
+        class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+        Predict
+      </button>
+      
+      <!-- Reset Button -->
+      <button type="reset" 
+        class="w-full bg-gray-200 text-gray-600 py-2 rounded-lg hover:bg-gray-300 transition duration-300">
+        Reset
+      </button>
+
+      <!-- Results -->
+      <div class="results mt-6 text-center">
+        {% if prediction == ['FAKE'] %}
+          <h2 class="text-red-500 font-semibold slide-up">⚠️ Fake News Detected</h2>
+        {% elif prediction == ['REAL'] %}
+          <h2 class="text-green-500 font-semibold slide-up">✅ Real News Detected</h2>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.querySelector('form');
+    const predictBtn = document.getElementById('predictBtn');
+    const loading = document.getElementById('loading');
+
+    form.addEventListener('submit', function () {
+      // Show loading spinner
+      loading.classList.remove('hidden');
+      predictBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>
