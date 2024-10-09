@@ -1,98 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fake News📰 Detection System</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    .fade-in {
-      animation: fadeIn 0.5s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-    .slide-up {
-      animation: slideUp 0.5s ease-in-out;
-    }
-    @keyframes slideUp {
-      from {
-        transform: translateY(20px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-    .loading-spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      border-left-color: #4f46e5;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FakeNewsDetective</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+        header {
+            background-color: #ffffff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo {
+            font-weight: 700;
+            font-size: 1.5em;
+            color: #3b82f6;
+        }
+        nav a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: #4b5563;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #3b82f6;
+        }
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .detect-box {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            box-sizing: border-box;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        button {
+            background-color: #3b82f6;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .logo-image {
+            width: 120px;
+            height: 120px;
+            margin: 30px auto;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(59, 130, 246, 0.3);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+<body class="bg-gray-100">
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="logo text-blue-500">FakeNewsDetective</div>
+            <nav>
+                <a href="#" class="hover:text-blue-500 transition duration-300">Home</a>
+                <a href="#" class="hover:text-blue-500 transition duration-300">About</a>
+                <a href="#" class="hover:text-blue-500 transition duration-300">Contact</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="container mx-auto">
+        <div class="detect-box bg-white rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Detect Fake News</h2>
+            <p class="text-gray-600 mb-6">Enter text you want to verify for authenticity</p>
+            <form action="{{ url_for('predict') }}" method="POST" class="space-y-6">
+                <input type="text" name="message" required placeholder="Enter text here" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                
+                <div id="loading" class="hidden text-center">
+                    <div class="loading-spinner mx-auto mb-4"></div>
+                    <p class="text-gray-500">Processing your request...</p>
+                </div>
+                
+                <button id="predictBtn" type="submit" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300">
+                    Detect
+                </button>
+                
+                <button type="reset" class="w-full bg-gray-200 text-gray-600 py-2 rounded-md hover:bg-gray-300 transition duration-300">
+                    Reset
+                </button>
+            </form>
+            
+            <div class="results mt-8 text-center">
+                {% if prediction == ['FAKE'] %}
+                    <h2 class="text-red-500 font-semibold text-xl animate-bounce">⚠️ Fake News Detected</h2>
+                {% elif prediction == ['REAL'] %}
+                    <h2 class="text-green-500 font-semibold text-xl animate-pulse">✅ Real News Detected</h2>
+                {% endif %}
+            </div>
+        </div>
+ 
+    </main>
 
-<body class="bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center min-h-screen">
-  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md fade-in">
-    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Fake News📰 Detector</h1>
+    <script>
+        const form = document.querySelector('form');
+        const predictBtn = document.getElementById('predictBtn');
+        const loading = document.getElementById('loading');
 
-    <form action="{{ url_for('predict') }}" method="POST" class="space-y-4">
-      <textarea name="message" rows="6" required placeholder="Type your news article here..."
-        class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-      
-      <!-- Loading Spinner -->
-      <div id="loading" class="hidden text-center">
-        <div class="loading-spinner mx-auto mb-4"></div>
-        <p class="text-gray-500">Processing...</p>
-      </div>
-
-      <!-- Predict Button -->
-      <button id="predictBtn" type="submit" 
-        class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300">
-        Predict
-      </button>
-      
-      <!-- Reset Button -->
-      <button type="reset" 
-        class="w-full bg-gray-200 text-gray-600 py-2 rounded-lg hover:bg-gray-300 transition duration-300">
-        Reset
-      </button>
-
-      <!-- Results -->
-      <div class="results mt-6 text-center">
-        {% if prediction == ['FAKE'] %}
-          <h2 class="text-red-500 font-semibold slide-up">⚠️ Fake News Detected</h2>
-        {% elif prediction == ['REAL'] %}
-          <h2 class="text-green-500 font-semibold slide-up">✅ Real News Detected</h2>
-        {% endif %}
-      </div>
-    </form>
-  </div>
-
-  <script>
-    const form = document.querySelector('form');
-    const predictBtn = document.getElementById('predictBtn');
-    const loading = document.getElementById('loading');
-
-    form.addEventListener('submit', function () {
-      // Show loading spinner
-      loading.classList.remove('hidden');
-      predictBtn.disabled = true;
-    });
-  </script>
+        form.addEventListener('submit', function () {
+            loading.classList.remove('hidden');
+            predictBtn.disabled = true;
+            predictBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+    </script>
 </body>
 </html>
