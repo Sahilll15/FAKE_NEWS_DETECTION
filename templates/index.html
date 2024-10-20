@@ -103,11 +103,7 @@
     <header class="bg-white shadow-md">
         <div class="container mx-auto flex justify-between items-center">
             <div class="logo text-blue-500">FakeNewsDetective</div>
-            <nav>
-                <a href="#" class="hover:text-blue-500 transition duration-300">Home</a>
-                <a href="#" class="hover:text-blue-500 transition duration-300">About</a>
-                <a href="#" class="hover:text-blue-500 transition duration-300">Contact</a>
-            </nav>
+           
         </div>
     </header>
     
@@ -115,10 +111,21 @@
         <div class="detect-box bg-white rounded-lg shadow-lg">
             <h2 class="text-2xl font-bold mb-4 text-gray-800">Detect Fake News</h2>
             <p class="text-gray-600 mb-6">Enter text you want to verify for authenticity</p>
-            <form action="{{ url_for('predict') }}" method="POST" class="space-y-6">
+            <form action="{{ url_for('predict') }}" method="POST" class="space-y-6" id="predictionForm">
                 <input type="text" name="message" required placeholder="Enter text here" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 
-                <div id="loading" class="hidden text-center">
+                <div class="flex justify-center space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="model_type" value="pac" checked class="form-radio text-blue-500">
+                        <span class="ml-2">PAC Model (Accuracy: 92.84%)</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="model_type" value="lstm" class="form-radio text-blue-500">
+                        <span class="ml-2">LSTM Model (Accuracy: 89%)</span>
+                    </label>
+                </div>
+                
+                <div id="loading" class="hidden">
                     <div class="loading-spinner mx-auto mb-4"></div>
                     <p class="text-gray-500">Processing your request...</p>
                 </div>
@@ -132,27 +139,58 @@
                 </button>
             </form>
             
-            <div class="results mt-8 text-center">
-                {% if prediction == ['FAKE'] %}
-                    <h2 class="text-red-500 font-semibold text-xl animate-bounce">⚠️ Fake News Detected</h2>
-                {% elif prediction == ['REAL'] %}
-                    <h2 class="text-green-500 font-semibold text-xl animate-pulse">✅ Real News Detected</h2>
-                {% endif %}
+            <div id="results" class="results mt-8 text-center hidden">
+                <h2 id="resultText" class="font-semibold text-xl"></h2>
             </div>
         </div>
  
     </main>
 
     <script>
-        const form = document.querySelector('form');
-        const predictBtn = document.getElementById('predictBtn');
-        const loading = document.getElementById('loading');
+       const form = document.getElementById('predictionForm');
+const predictBtn = document.getElementById('predictBtn');
+const loading = document.getElementById('loading');
+const results = document.getElementById('results');
+const resultText = document.getElementById('resultText');
 
-        form.addEventListener('submit', function () {
-            loading.classList.remove('hidden');
-            predictBtn.disabled = true;
-            predictBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        });
+form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    loading.classList.remove('hidden');  // Show loading spinner
+    results.classList.add('hidden');     // Hide results initially
+    predictBtn.disabled = true;          // Disable button while fetching
+    predictBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+    fetch("/predict", {
+        method: 'POST',
+        body: new FormData(form)
+    })
+    .then(response => response.json())
+    .then(data => {
+        loading.classList.add('hidden');    // Hide loading spinner
+        results.classList.remove('hidden'); // Show results
+        predictBtn.disabled = false;        // Enable button again
+        predictBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        // Display the prediction result with correct styling
+        if (data.prediction === 'FAKE') {
+            resultText.textContent = '⚠️ Fake News Detected';
+            resultText.className = 'text-red-500 font-semibold text-xl animate-bounce';
+        } else if (data.prediction === 'REAL') {
+            resultText.textContent = '✅ Real News Detected';
+            resultText.className = 'text-green-500 font-semibold text-xl animate-pulse';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        loading.classList.add('hidden');    // Hide loading spinner
+        predictBtn.disabled = false;        // Enable button again
+        predictBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        resultText.textContent = 'An error occurred. Please try again.';
+        resultText.className = 'text-red-500 font-semibold text-xl';
+        results.classList.remove('hidden'); // Show error message
+    });
+});
+
     </script>
 </body>
 </html>
